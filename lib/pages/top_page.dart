@@ -15,13 +15,44 @@ class TopPage extends StatefulWidget {
 
 class _TopPageState extends State<TopPage> {
   User user = User(id: const Uuid().v4(), username: 'NEUTRON', words: []);
+  List<Word> words = [];
+  List<String> levels = ['A', 'B', 'C', 'Idioms'];
+  Map<String, String> symbols = {};
+  String level = 'A';
 
   ScrollController scrollController = ScrollController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: const Text('Eiken Grade 1')),
+        appBar: AppBar(
+          title: const Text('Eiken Grade 1'),
+          actions: [
+            Row(
+              children: [
+                const Text('Level:'),
+                const SizedBox(width: 10),
+                Theme(
+                  data: Theme.of(context).copyWith(canvasColor: Colors.green),
+                  child: DropdownButton(
+                    value: level,
+                    items: levels
+                        .map((level) => DropdownMenuItem(
+                            value: level,
+                            child: Text(level,
+                                style: const TextStyle(color: Colors.white))))
+                        .toList(),
+                    onChanged: (String? value) {
+                      setState(() {
+                        level = value!;
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
         body: FutureBuilder(
           future: Future.wait([
             DefaultAssetBundle.of(context).loadString('assets/words.json'),
@@ -33,7 +64,7 @@ class _TopPageState extends State<TopPage> {
             } else if (!snapshot.hasData) {
               return const Center(child: Text('単語データがありません'));
             }
-            List<Word> words = List<Word>.from(
+            words = List<Word>.from(
                 jsonDecode((snapshot.data! as List)[0].toString())
                     .map((word) => Word(
                           category: word['category'],
@@ -43,22 +74,22 @@ class _TopPageState extends State<TopPage> {
                           exp: word['exp'] ?? '',
                           id: word['id'],
                           jap: word['jap'],
-                          level: word['level'] ?? '',
+                          level: word['level'] != '' ? word['level'] : 'Idioms',
                           mp3Eng: word['mp3_eng'],
                           mp3Ex: word['mp3_ex'],
                           mp3Jap: word['mp3_jap'],
                           no: word['no'],
                           pron: word['pron'] ?? '',
                           pum: word['pum'],
-                        )));
+                        ))
+                    .where((word) => word.level == level));
             List<String> ipaSymbols = List<String>.from(
                 jsonDecode((snapshot.data! as List)[1].toString())
                     .map((symbol) => symbol['ipa_symbol']));
             List<String> obsSymbols = List<String>.from(
                 jsonDecode((snapshot.data! as List)[1].toString())
                     .map((symbol) => symbol['obs_symbol']));
-            Map<String, String> symbols =
-                Map.fromIterables(obsSymbols, ipaSymbols);
+            symbols = Map.fromIterables(obsSymbols, ipaSymbols);
             return DraggableScrollbar.semicircle(
               controller: scrollController,
               child: ListView.builder(
