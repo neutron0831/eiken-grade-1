@@ -1,5 +1,5 @@
 class Word {
-  String uuid;
+  String? uuid;
   String category;
   String eng;
   String exEng;
@@ -16,7 +16,7 @@ class Word {
   String pum;
 
   Word(
-      {required this.uuid,
+      {this.uuid,
       required this.category,
       required this.eng,
       required this.exEng,
