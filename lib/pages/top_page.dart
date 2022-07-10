@@ -104,7 +104,8 @@ class _TopPageState extends State<TopPage> {
                         children: [
                           Container(
                             padding: const EdgeInsets.all(10),
-                            width: MediaQuery.of(context).size.width * 0.4,
+                            width: MediaQuery.of(context).size.width *
+                                (level != 'Idioms' ? 0.4 : 0.5),
                             color: const Color(0xfffbd6e7),
                             child: SingleChildScrollView(
                               scrollDirection: Axis.horizontal,
