@@ -162,9 +162,15 @@ class _TopPageState extends State<TopPage> {
                                 children: [
                                   SingleChildScrollView(
                                     child: Text(
-                                        words[index]
-                                            .jap
-                                            .replaceAll(RegExp(r'<.*?>'), ''),
+                                        user.words!
+                                                .where((word) =>
+                                                    word['id'] ==
+                                                        words[index].id &&
+                                                    word['remembered'])
+                                                .isEmpty
+                                            ? words[index].jap.replaceAll(
+                                                RegExp(r'<.*?>'), '')
+                                            : '',
                                         maxLines: 3,
                                         overflow: TextOverflow.ellipsis),
                                   ),
