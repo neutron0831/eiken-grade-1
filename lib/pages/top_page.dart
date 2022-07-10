@@ -59,9 +59,7 @@ class _TopPageState extends State<TopPage> {
             DefaultAssetBundle.of(context).loadString('assets/symbols.json')
           ]),
           builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (!snapshot.hasData) {
+            if (!snapshot.hasData) {
               return const Center(child: Text('単語データがありません'));
             }
             words = List<Word>.from(
@@ -102,30 +100,59 @@ class _TopPageState extends State<TopPage> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            width: MediaQuery.of(context).size.width *
-                                (level != 'Idioms' ? 0.4 : 0.5),
-                            color: const Color(0xfffbd6e7),
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(words[index].id),
-                                  Text(words[index].eng,
-                                      style: const TextStyle(
-                                          fontSize: 24,
-                                          fontWeight: FontWeight.bold)),
-                                  Text(symbols.entries.fold(
-                                      words[index].pron.toString(),
-                                      (prev, e) => prev
-                                          .replaceAll(e.key, e.value)
-                                          .replaceAll(RegExp(r'<.*?>'), '')))
-                                ],
+                          GestureDetector(
+                              child: Container(
+                                padding: const EdgeInsets.all(10),
+                                width: MediaQuery.of(context).size.width *
+                                    (level != 'Idioms' ? 0.4 : 0.5),
+                                color: const Color(0xfffbd6e7),
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(words[index].id),
+                                      Text(words[index].eng,
+                                          style: TextStyle(
+                                              backgroundColor: user.words!
+                                                      .where((word) =>
+                                                          word['id'] ==
+                                                              words[index].id &&
+                                                          word['remembered'])
+                                                      .isNotEmpty
+                                                  ? Colors.green[200]
+                                                  : Colors.transparent,
+                                              fontSize: 24,
+                                              fontWeight: FontWeight.bold)),
+                                      Text(symbols.entries.fold(
+                                          words[index].pron.toString(),
+                                          (prev, e) => prev
+                                              .replaceAll(e.key, e.value)
+                                              .replaceAll(
+                                                  RegExp(r'<.*?>'), '')))
+                                    ],
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
+                              onTap: () {
+                                setState(() {
+                                  int i = user.words!.indexWhere(
+                                      (word) => word['id'] == words[index].id);
+                                  if (i != -1) {
+                                    user.words![i]['remembered'] =
+                                        !user.words![i]['remembered'];
+                                    user.words![i]['updatedAt'] =
+                                        DateTime.now();
+                                  } else {
+                                    user.words!.add({
+                                      'id': words[index].id,
+                                      'remembered': true,
+                                      'updatedAt': DateTime.now()
+                                    });
+                                  }
+                                });
+                              }),
                           Expanded(
                             child: Container(
                               padding: const EdgeInsets.all(10),
