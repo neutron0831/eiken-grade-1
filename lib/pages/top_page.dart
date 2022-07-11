@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 import 'package:eiken_grade_1/model/user.dart';
 import 'package:eiken_grade_1/model/word.dart';
@@ -14,7 +15,8 @@ class TopPage extends StatefulWidget {
 }
 
 class _TopPageState extends State<TopPage> {
-  User user = User(id: const Uuid().v4(), username: 'NEUTRON', words: []);
+  // Future users = FirebaseFirestore.instance.collection('users').get();
+  User user = User(id: '', username: 'NEUTRON', words: []);
   List<Word> words = [];
   List<String> levels = ['A', 'B', 'C', 'Idioms'];
   Map<String, String> symbols = {};
@@ -55,15 +57,38 @@ class _TopPageState extends State<TopPage> {
         ),
         body: FutureBuilder(
           future: Future.wait([
+            FirebaseFirestore.instance
+                .collection('users')
+                .where('username', isEqualTo: user.username)
+                .get(),
             DefaultAssetBundle.of(context).loadString('assets/words.json'),
             DefaultAssetBundle.of(context).loadString('assets/symbols.json')
           ]),
           builder: (context, snapshot) {
+            // if (snapshot.connectionState == ConnectionState.waiting) {
+            //   return const Center(child: CircularProgressIndicator());
+            // }
             if (!snapshot.hasData) {
               return const Center(child: Text('単語データがありません'));
             }
+            user.id = (snapshot.data! as List)[0].docs[0].id;
+            FirebaseFirestore.instance
+                .collection('users')
+                .doc(user.id)
+                .collection('words')
+                .get()
+                .then((snapshot) => {
+                      for (final word in snapshot.docs)
+                        {
+                          user.words!.add({
+                            'id': word['id'],
+                            'remembered': word['remembered'],
+                            'updatedAt': word['updated_at']
+                          })
+                        }
+                    });
             words = List<Word>.from(
-                jsonDecode((snapshot.data! as List)[0].toString())
+                jsonDecode((snapshot.data! as List)[1].toString())
                     .map((word) => Word(
                           category: word['category'],
                           eng: word['eng'],
@@ -82,10 +107,10 @@ class _TopPageState extends State<TopPage> {
                         ))
                     .where((word) => word.level == level));
             List<String> ipaSymbols = List<String>.from(
-                jsonDecode((snapshot.data! as List)[1].toString())
+                jsonDecode((snapshot.data! as List)[2].toString())
                     .map((symbol) => symbol['ipa_symbol']));
             List<String> obsSymbols = List<String>.from(
-                jsonDecode((snapshot.data! as List)[1].toString())
+                jsonDecode((snapshot.data! as List)[2].toString())
                     .map((symbol) => symbol['obs_symbol']));
             symbols = Map.fromIterables(obsSymbols, ipaSymbols);
             return DraggableScrollbar.semicircle(
@@ -122,7 +147,16 @@ class _TopPageState extends State<TopPage> {
                                                           word['remembered'])
                                                       .isNotEmpty
                                                   ? Colors.green[200]
-                                                  : Colors.transparent,
+                                                  : user.words!
+                                                          .where((word) =>
+                                                              word['id'] ==
+                                                                  words[index]
+                                                                      .id &&
+                                                              !word[
+                                                                  'remembered'])
+                                                          .isNotEmpty
+                                                      ? Colors.red[200]
+                                                      : Colors.transparent,
                                               fontSize: 24,
                                               fontWeight: FontWeight.bold)),
                                       Text(symbols.entries
@@ -138,20 +172,63 @@ class _TopPageState extends State<TopPage> {
                                   ),
                                 ),
                               ),
-                              onTap: () {
+                              onTap: () async {
+                                int i = user.words!.indexWhere(
+                                    (word) => word['id'] == words[index].id);
+                                if (i != -1) {
+                                  user.words![i]['remembered'] =
+                                      !user.words![i]['remembered'];
+                                  final word = user.words![i];
+                                  final wordId = (await FirebaseFirestore
+                                          .instance
+                                          .collection('users')
+                                          .doc(user.id)
+                                          .collection('words')
+                                          .where('id', isEqualTo: word['id'])
+                                          .get())
+                                      .docs[0]
+                                      .id;
+                                  await FirebaseFirestore.instance
+                                      .collection('users')
+                                      .doc(user.id)
+                                      .collection('words')
+                                      .doc(wordId)
+                                      .update({
+                                    'id': word['id'],
+                                    'remembered': word['remembered'],
+                                    'updated_at': Timestamp.now()
+                                  });
+                                } else {
+                                  final word = {
+                                    'id': words[index].id,
+                                    'remembered': true,
+                                    'updatedAt': DateTime.now()
+                                  };
+                                  user.words!.add(word);
+                                  await FirebaseFirestore.instance
+                                      .collection('users')
+                                      .doc(user.id)
+                                      .collection('words')
+                                      .add({
+                                    'id': word['id'],
+                                    'remembered': word['remembered'],
+                                    'updated_at': word['updatedAt']
+                                  });
+                                }
+                                final updatedWords = (await FirebaseFirestore
+                                        .instance
+                                        .collection('users')
+                                        .doc(user.id)
+                                        .collection('words')
+                                        .get())
+                                    .docs;
                                 setState(() {
-                                  int i = user.words!.indexWhere(
-                                      (word) => word['id'] == words[index].id);
-                                  if (i != -1) {
-                                    user.words![i]['remembered'] =
-                                        !user.words![i]['remembered'];
-                                    user.words![i]['updatedAt'] =
-                                        DateTime.now();
-                                  } else {
+                                  user.words = [];
+                                  for (final word in updatedWords) {
                                     user.words!.add({
-                                      'id': words[index].id,
-                                      'remembered': true,
-                                      'updatedAt': DateTime.now()
+                                      'id': word['id'],
+                                      'remembered': word['remembered'],
+                                      'updatedAt': word['updated_at']
                                     });
                                   }
                                 });
