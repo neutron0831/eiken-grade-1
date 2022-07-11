@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 import 'package:eiken_grade_1/model/user.dart';
 import 'package:eiken_grade_1/model/word.dart';
+import 'package:eiken_grade_1/utils/firebase.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
@@ -15,12 +16,11 @@ class TopPage extends StatefulWidget {
 }
 
 class _TopPageState extends State<TopPage> {
-  // Future users = FirebaseFirestore.instance.collection('users').get();
-  User user = User(id: '', username: 'NEUTRON', words: []);
-  List<Word> words = [];
-  List<String> levels = ['A', 'B', 'C', 'Idioms'];
-  Map<String, String> symbols = {};
-  String level = 'A';
+  static User user = User(id: '', username: 'NEUTRON', words: []);
+  static List<Word> words = [];
+  static List<String> levels = ['A', 'B', 'C', 'Idioms'];
+  static Map<String, String> symbols = {};
+  static String level = 'A';
 
   ScrollController scrollController = ScrollController();
 
@@ -57,12 +57,12 @@ class _TopPageState extends State<TopPage> {
         ),
         body: FutureBuilder(
           future: Future.wait([
-            FirebaseFirestore.instance
-                .collection('users')
-                .where('username', isEqualTo: user.username)
-                .get(),
             DefaultAssetBundle.of(context).loadString('assets/words.json'),
-            DefaultAssetBundle.of(context).loadString('assets/symbols.json')
+            DefaultAssetBundle.of(context).loadString('assets/symbols.json'),
+            Firestore.getUser(user.username).then((u) {
+              user.id = u['id'].toString();
+              Firestore.getWords(user.id).then((words) => user.words = words);
+            }),
           ]),
           builder: (context, snapshot) {
             // if (snapshot.connectionState == ConnectionState.waiting) {
@@ -71,24 +71,8 @@ class _TopPageState extends State<TopPage> {
             if (!snapshot.hasData) {
               return const Center(child: Text('単語データがありません'));
             }
-            user.id = (snapshot.data! as List)[0].docs[0].id;
-            FirebaseFirestore.instance
-                .collection('users')
-                .doc(user.id)
-                .collection('words')
-                .get()
-                .then((snapshot) => {
-                      for (final word in snapshot.docs)
-                        {
-                          user.words!.add({
-                            'id': word['id'],
-                            'remembered': word['remembered'],
-                            'updatedAt': word['updated_at']
-                          })
-                        }
-                    });
             words = List<Word>.from(
-                jsonDecode((snapshot.data! as List)[1].toString())
+                jsonDecode((snapshot.data! as List)[0].toString())
                     .map((word) => Word(
                           category: word['category'],
                           eng: word['eng'],
@@ -107,10 +91,10 @@ class _TopPageState extends State<TopPage> {
                         ))
                     .where((word) => word.level == level));
             List<String> ipaSymbols = List<String>.from(
-                jsonDecode((snapshot.data! as List)[2].toString())
+                jsonDecode((snapshot.data! as List)[1].toString())
                     .map((symbol) => symbol['ipa_symbol']));
             List<String> obsSymbols = List<String>.from(
-                jsonDecode((snapshot.data! as List)[2].toString())
+                jsonDecode((snapshot.data! as List)[1].toString())
                     .map((symbol) => symbol['obs_symbol']));
             symbols = Map.fromIterables(obsSymbols, ipaSymbols);
             return DraggableScrollbar.semicircle(
@@ -179,25 +163,7 @@ class _TopPageState extends State<TopPage> {
                                   user.words![i]['remembered'] =
                                       !user.words![i]['remembered'];
                                   final word = user.words![i];
-                                  final wordId = (await FirebaseFirestore
-                                          .instance
-                                          .collection('users')
-                                          .doc(user.id)
-                                          .collection('words')
-                                          .where('id', isEqualTo: word['id'])
-                                          .get())
-                                      .docs[0]
-                                      .id;
-                                  await FirebaseFirestore.instance
-                                      .collection('users')
-                                      .doc(user.id)
-                                      .collection('words')
-                                      .doc(wordId)
-                                      .update({
-                                    'id': word['id'],
-                                    'remembered': word['remembered'],
-                                    'updated_at': Timestamp.now()
-                                  });
+                                  await Firestore.updateWord(user.id, word);
                                 } else {
                                   final word = {
                                     'id': words[index].id,
@@ -205,32 +171,12 @@ class _TopPageState extends State<TopPage> {
                                     'updatedAt': DateTime.now()
                                   };
                                   user.words!.add(word);
-                                  await FirebaseFirestore.instance
-                                      .collection('users')
-                                      .doc(user.id)
-                                      .collection('words')
-                                      .add({
-                                    'id': word['id'],
-                                    'remembered': word['remembered'],
-                                    'updated_at': word['updatedAt']
-                                  });
+                                  await Firestore.addWord(user.id, word);
                                 }
-                                final updatedWords = (await FirebaseFirestore
-                                        .instance
-                                        .collection('users')
-                                        .doc(user.id)
-                                        .collection('words')
-                                        .get())
-                                    .docs;
+                                final updatedWords =
+                                    await Firestore.getWords(user.id);
                                 setState(() {
-                                  user.words = [];
-                                  for (final word in updatedWords) {
-                                    user.words!.add({
-                                      'id': word['id'],
-                                      'remembered': word['remembered'],
-                                      'updatedAt': word['updated_at']
-                                    });
-                                  }
+                                  user.words = updatedWords;
                                 });
                               }),
                           Expanded(
