@@ -18,12 +18,32 @@ class TopPage extends StatefulWidget {
 class _TopPageState extends State<TopPage> {
   static User user = User(id: '', username: 'NEUTRON', words: []);
   static List<Word> words = [];
-  static List<String> levels = ['A', 'B', 'C', 'Idioms'];
   static Map<String, String> symbols = {};
-  static String level = 'A';
+  static List<String> levels = ['A', 'B', 'C', 'Idioms'];
+  static String levelToDisplay = 'A';
+  static List<String> status = [
+    'Not remembered',
+    'Forgot',
+    'Remembered',
+    'All'
+  ];
+  static String statusToDisplay = 'Not remembered';
 
   ScrollController scrollController = ScrollController();
   GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+
+  bool isWord(String wordId, String status) {
+    final words = user.words!.where((word) => word['id'] == wordId);
+    if (status == 'Remembered') {
+      return words.where((word) => word['remembered']).isNotEmpty;
+    } else if (status == 'Forgot') {
+      return words.where((word) => !word['remembered']).isNotEmpty;
+    } else if (status == 'Not remembered') {
+      return words.where((word) => word['remembered']).isEmpty;
+    } else {
+      return false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +94,7 @@ class _TopPageState extends State<TopPage> {
                         pron: word['pron'] ?? '',
                         pum: word['pum'],
                       ))
-                  .where((word) => word.level == level));
+                  .where((word) => word.level == levelToDisplay));
           List<String> ipaSymbols = List<String>.from(
               jsonDecode((snapshot.data! as List)[1].toString())
                   .map((symbol) => symbol['ipa_symbol']));
@@ -88,105 +108,110 @@ class _TopPageState extends State<TopPage> {
                 controller: scrollController,
                 itemCount: words.length,
                 itemBuilder: (context, index) {
-                  return Container(
-                    decoration: const BoxDecoration(
-                        border: Border(bottom: BorderSide())),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        GestureDetector(
-                            child: Container(
-                              padding: const EdgeInsets.all(10),
-                              width: MediaQuery.of(context).size.width *
-                                  (level != 'Idioms' ? 0.4 : 0.5),
-                              color: const Color(0xfffbd6e7),
-                              child: SingleChildScrollView(
-                                scrollDirection: Axis.horizontal,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(words[index].id),
-                                    Text(words[index].eng,
-                                        style: TextStyle(
-                                            backgroundColor: user.words!
-                                                    .where((word) =>
-                                                        word['id'] ==
-                                                            words[index].id &&
-                                                        word['remembered'])
-                                                    .isNotEmpty
-                                                ? Colors.green[200]
-                                                : user.words!
-                                                        .where((word) =>
-                                                            word['id'] ==
-                                                                words[index]
-                                                                    .id &&
-                                                            !word['remembered'])
-                                                        .isNotEmpty
-                                                    ? Colors.red[200]
-                                                    : Colors.transparent,
-                                            fontSize: 24,
-                                            fontWeight: FontWeight.bold)),
-                                    Text(symbols.entries.toList().reversed.fold(
-                                        words[index].pron.toString(),
-                                        (prev, e) => prev
-                                            .replaceAll(e.key, e.value)
-                                            .replaceAll(RegExp(r'<.*?>'), '')))
-                                  ],
+                  return statusToDisplay == 'All' ||
+                          statusToDisplay == 'Remembered' &&
+                              isWord(words[index].id, 'Remembered') ||
+                          statusToDisplay == 'Forgot' &&
+                              isWord(words[index].id, 'Forgot') ||
+                          statusToDisplay == 'Not remembered' &&
+                              isWord(words[index].id, 'Not remembered')
+                      ? Container(
+                          decoration: const BoxDecoration(
+                              border: Border(bottom: BorderSide())),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              GestureDetector(
+                                  child: Container(
+                                    padding: const EdgeInsets.all(10),
+                                    width: MediaQuery.of(context).size.width *
+                                        (levelToDisplay != 'Idioms'
+                                            ? 0.4
+                                            : 0.5),
+                                    color: const Color(0xfffbd6e7),
+                                    child: SingleChildScrollView(
+                                      scrollDirection: Axis.horizontal,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(words[index].id),
+                                          Text(words[index].eng,
+                                              style: TextStyle(
+                                                  backgroundColor: isWord(
+                                                          words[index].id,
+                                                          'Remembered')
+                                                      ? Colors.green[200]
+                                                      : isWord(words[index].id,
+                                                              'Forgot')
+                                                          ? Colors.red[200]
+                                                          : Colors.transparent,
+                                                  fontSize: 24,
+                                                  fontWeight: FontWeight.bold)),
+                                          Text(symbols.entries
+                                              .toList()
+                                              .reversed
+                                              .fold(
+                                                  words[index].pron.toString(),
+                                                  (prev, e) => prev
+                                                      .replaceAll(
+                                                          e.key, e.value)
+                                                      .replaceAll(
+                                                          RegExp(r'<.*?>'),
+                                                          '')))
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  onTap: () async {
+                                    int i = user.words!.indexWhere((word) =>
+                                        word['id'] == words[index].id);
+                                    if (i != -1) {
+                                      user.words![i]['remembered'] =
+                                          !user.words![i]['remembered'];
+                                      final word = user.words![i];
+                                      await Firestore.updateWord(user.id, word);
+                                    } else {
+                                      final word = {
+                                        'id': words[index].id,
+                                        'remembered': true,
+                                        'updatedAt': DateTime.now()
+                                      };
+                                      user.words!.add(word);
+                                      await Firestore.addWord(user.id, word);
+                                    }
+                                    final updatedWords =
+                                        await Firestore.getWords(user.id);
+                                    setState(() {
+                                      user.words = updatedWords;
+                                    });
+                                  }),
+                              Expanded(
+                                child: Container(
+                                  padding: const EdgeInsets.all(10),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.max,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      SingleChildScrollView(
+                                        child: Text(
+                                            isWord(words[index].id,
+                                                    'Not remembered')
+                                                ? words[index].jap.replaceAll(
+                                                    RegExp(r'<.*?>'), '')
+                                                : '',
+                                            maxLines: 3,
+                                            overflow: TextOverflow.ellipsis),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                            onTap: () async {
-                              int i = user.words!.indexWhere(
-                                  (word) => word['id'] == words[index].id);
-                              if (i != -1) {
-                                user.words![i]['remembered'] =
-                                    !user.words![i]['remembered'];
-                                final word = user.words![i];
-                                await Firestore.updateWord(user.id, word);
-                              } else {
-                                final word = {
-                                  'id': words[index].id,
-                                  'remembered': true,
-                                  'updatedAt': DateTime.now()
-                                };
-                                user.words!.add(word);
-                                await Firestore.addWord(user.id, word);
-                              }
-                              final updatedWords =
-                                  await Firestore.getWords(user.id);
-                              setState(() {
-                                user.words = updatedWords;
-                              });
-                            }),
-                        Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.all(10),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.max,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                SingleChildScrollView(
-                                  child: Text(
-                                      user.words!
-                                              .where((word) =>
-                                                  word['id'] ==
-                                                      words[index].id &&
-                                                  word['remembered'])
-                                              .isEmpty
-                                          ? words[index]
-                                              .jap
-                                              .replaceAll(RegExp(r'<.*?>'), '')
-                                          : '',
-                                      maxLines: 3,
-                                      overflow: TextOverflow.ellipsis),
-                                ),
-                              ],
-                            ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
-                  );
+                        )
+                      : Container();
                 }),
           );
         },
@@ -201,17 +226,36 @@ class _TopPageState extends State<TopPage> {
                 leading: const Icon(Icons.build_circle),
                 title: Row(
                   children: [
-                    const Text('Level:'),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 50, child: Text('Level:')),
                     DropdownButton(
-                      value: level,
+                      value: levelToDisplay,
                       items: levels
                           .map((level) => DropdownMenuItem(
                               value: level, child: Text(level)))
                           .toList(),
                       onChanged: (String? value) {
                         setState(() {
-                          level = value!;
+                          levelToDisplay = value!;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.build_circle),
+                title: Row(
+                  children: [
+                    const SizedBox(width: 50, child: Text('Status:')),
+                    DropdownButton(
+                      value: statusToDisplay,
+                      items: status
+                          .map(
+                              (s) => DropdownMenuItem(value: s, child: Text(s)))
+                          .toList(),
+                      onChanged: (String? value) {
+                        setState(() {
+                          statusToDisplay = value!;
                         });
                       },
                     ),
