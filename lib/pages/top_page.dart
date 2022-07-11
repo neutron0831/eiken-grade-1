@@ -125,12 +125,15 @@ class _TopPageState extends State<TopPage> {
                                                   : Colors.transparent,
                                               fontSize: 24,
                                               fontWeight: FontWeight.bold)),
-                                      Text(symbols.entries.fold(
-                                          words[index].pron.toString(),
-                                          (prev, e) => prev
-                                              .replaceAll(e.key, e.value)
-                                              .replaceAll(
-                                                  RegExp(r'<.*?>'), '')))
+                                      Text(symbols.entries
+                                          .toList()
+                                          .reversed
+                                          .fold(
+                                              words[index].pron.toString(),
+                                              (prev, e) => prev
+                                                  .replaceAll(e.key, e.value)
+                                                  .replaceAll(
+                                                      RegExp(r'<.*?>'), '')))
                                     ],
                                   ),
                                 ),
