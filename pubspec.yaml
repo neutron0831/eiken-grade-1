@@ -37,6 +37,8 @@ dependencies:
   draggable_scrollbar: ^0.1.0
   cloud_firestore: ^3.2.1
   firebase_core: ^1.19.1
+  just_audio: ^0.9.27
+  audio_session: ^0.1.9
 
 dev_dependencies:
   flutter_test:
@@ -72,6 +74,7 @@ flutter:
   assets:
     - assets/words.json
     - assets/symbols.json
+    - assets/mp3/
 
   # To add custom fonts to your application, add a fonts section here,
   # in this "flutter" section. Each entry in this list should have a

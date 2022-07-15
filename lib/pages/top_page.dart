@@ -1,10 +1,12 @@
 import 'dart:convert';
 
+import 'package:audio_session/audio_session.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 import 'package:eiken_grade_1/model/user.dart';
 import 'package:eiken_grade_1/model/word.dart';
 import 'package:eiken_grade_1/utils/firebase.dart';
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
 
 class TopPage extends StatefulWidget {
   const TopPage({Key? key}) : super(key: key);
@@ -26,7 +28,10 @@ class _TopPageState extends State<TopPage> {
     'All'
   ];
   static String statusToDisplay = 'Not remembered';
+  static bool listenOnTap = true;
+  static double playSpeed = 1.0;
 
+  AudioPlayer audioPlayer = AudioPlayer();
   ScrollController scrollController = ScrollController();
   GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -49,6 +54,17 @@ class _TopPageState extends State<TopPage> {
             .where((word) => word.level == level && isWord(word.id, status))
             .length
         : 1;
+  }
+
+  Future<void> _setupSession() async {
+    final session = await AudioSession.instance;
+    await session.configure(const AudioSessionConfiguration.speech());
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _setupSession();
   }
 
   @override
@@ -170,6 +186,12 @@ class _TopPageState extends State<TopPage> {
                                     ),
                                   ),
                                   onTap: () async {
+                                    if (listenOnTap) {
+                                      await audioPlayer.stop();
+                                      await audioPlayer.setAsset(
+                                          'assets/mp3/${words[index].mp3Eng}.mp3');
+                                      await audioPlayer.play();
+                                    }
                                     int i = user.words!.indexWhere((word) =>
                                         word['id'] == words[index].id);
                                     if (i != -1) {
@@ -262,10 +284,52 @@ class _TopPageState extends State<TopPage> {
                         .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                         .toList(),
                     onChanged: (String? value) {
-                      statusToDisplay = value!;
-                      setState(() {});
+                      setState(() {
+                        statusToDisplay = value!;
+                      });
                     },
                   ),
+                ],
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.build_circle),
+              title: Row(
+                children: [
+                  Text('Listen on Tap: ${listenOnTap ? 'ON' : 'OFF'}'),
+                  Switch(
+                    value: listenOnTap,
+                    onChanged: (bool? value) {
+                      setState(() {
+                        listenOnTap = value!;
+                      });
+                    },
+                  )
+                ],
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.build_circle),
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Play Speed: x$playSpeed'),
+                  SliderTheme(
+                    data: const SliderThemeData(
+                        activeTickMarkColor: Colors.green,
+                        inactiveTickMarkColor: Colors.transparent),
+                    child: Slider(
+                        value: playSpeed,
+                        min: 0.5,
+                        max: 4.0,
+                        divisions: 7,
+                        onChanged: (double? value) async {
+                          await audioPlayer.setSpeed(value!);
+                          setState(() {
+                            playSpeed = value;
+                          });
+                        }),
+                  )
                 ],
               ),
             ),
