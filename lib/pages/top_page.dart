@@ -1,12 +1,10 @@
 import 'dart:convert';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 import 'package:eiken_grade_1/model/user.dart';
 import 'package:eiken_grade_1/model/word.dart';
 import 'package:eiken_grade_1/utils/firebase.dart';
 import 'package:flutter/material.dart';
-import 'package:uuid/uuid.dart';
 
 class TopPage extends StatefulWidget {
   const TopPage({Key? key}) : super(key: key);
@@ -41,8 +39,16 @@ class _TopPageState extends State<TopPage> {
     } else if (status == 'Not remembered') {
       return words.where((word) => word['remembered']).isEmpty;
     } else {
-      return false;
+      return true;
     }
+  }
+
+  int wordsNum(String level, String status) {
+    return words.isNotEmpty
+        ? words
+            .where((word) => word.level == level && isWord(word.id, status))
+            .length
+        : 1;
   }
 
   @override
@@ -76,8 +82,8 @@ class _TopPageState extends State<TopPage> {
           if (!snapshot.hasData) {
             return const Center(child: Text('単語データがありません'));
           }
-          words =
-              List<Word>.from(jsonDecode((snapshot.data! as List)[0].toString())
+          words = List<Word>.from(
+              jsonDecode((snapshot.data! as List)[0].toString())
                   .map((word) => Word(
                         category: word['category'],
                         eng: word['eng'],
@@ -93,8 +99,7 @@ class _TopPageState extends State<TopPage> {
                         no: word['no'],
                         pron: word['pron'] ?? '',
                         pum: word['pum'],
-                      ))
-                  .where((word) => word.level == levelToDisplay));
+                      )));
           List<String> ipaSymbols = List<String>.from(
               jsonDecode((snapshot.data! as List)[1].toString())
                   .map((symbol) => symbol['ipa_symbol']));
@@ -108,13 +113,14 @@ class _TopPageState extends State<TopPage> {
                 controller: scrollController,
                 itemCount: words.length,
                 itemBuilder: (context, index) {
-                  return statusToDisplay == 'All' ||
-                          statusToDisplay == 'Remembered' &&
-                              isWord(words[index].id, 'Remembered') ||
-                          statusToDisplay == 'Forgot' &&
-                              isWord(words[index].id, 'Forgot') ||
-                          statusToDisplay == 'Not remembered' &&
-                              isWord(words[index].id, 'Not remembered')
+                  return levelToDisplay == words[index].level &&
+                          (statusToDisplay == 'All' ||
+                              statusToDisplay == 'Remembered' &&
+                                  isWord(words[index].id, 'Remembered') ||
+                              statusToDisplay == 'Forgot' &&
+                                  isWord(words[index].id, 'Forgot') ||
+                              statusToDisplay == 'Not remembered' &&
+                                  isWord(words[index].id, 'Not remembered'))
                       ? Container(
                           decoration: const BoxDecoration(
                               border: Border(bottom: BorderSide())),
@@ -219,51 +225,73 @@ class _TopPageState extends State<TopPage> {
       endDrawer: SafeArea(
         child: Drawer(
             child: Scaffold(
-          appBar: AppBar(title: const Text('Settings')),
-          body: Column(
-            children: [
-              ListTile(
-                leading: const Icon(Icons.build_circle),
-                title: Row(
-                  children: [
-                    const SizedBox(width: 50, child: Text('Level:')),
-                    DropdownButton(
-                      value: levelToDisplay,
-                      items: levels
-                          .map((level) => DropdownMenuItem(
-                              value: level, child: Text(level)))
-                          .toList(),
-                      onChanged: (String? value) {
-                        setState(() {
-                          levelToDisplay = value!;
-                        });
-                      },
-                    ),
-                  ],
-                ),
+          appBar: AppBar(title: const Text('Menu')),
+          body: Column(children: [
+            const Padding(
+              padding: EdgeInsets.only(top: 21),
+              child: Text('Settings', style: TextStyle(fontSize: 21)),
+            ),
+            ListTile(
+              leading: const Icon(Icons.build_circle),
+              title: Row(
+                children: [
+                  const SizedBox(width: 50, child: Text('Level:')),
+                  DropdownButton(
+                    value: levelToDisplay,
+                    items: levels
+                        .map((level) =>
+                            DropdownMenuItem(value: level, child: Text(level)))
+                        .toList(),
+                    onChanged: (String? value) {
+                      setState(() {
+                        levelToDisplay = value!;
+                      });
+                    },
+                  ),
+                ],
               ),
-              ListTile(
-                leading: const Icon(Icons.build_circle),
-                title: Row(
-                  children: [
-                    const SizedBox(width: 50, child: Text('Status:')),
-                    DropdownButton(
-                      value: statusToDisplay,
-                      items: status
-                          .map(
-                              (s) => DropdownMenuItem(value: s, child: Text(s)))
-                          .toList(),
-                      onChanged: (String? value) {
-                        setState(() {
-                          statusToDisplay = value!;
-                        });
-                      },
-                    ),
-                  ],
+            ),
+            ListTile(
+              leading: const Icon(Icons.build_circle),
+              title: Row(
+                children: [
+                  const SizedBox(width: 50, child: Text('Status:')),
+                  DropdownButton(
+                    value: statusToDisplay,
+                    items: status
+                        .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                        .toList(),
+                    onChanged: (String? value) {
+                      statusToDisplay = value!;
+                      setState(() {});
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.only(top: 21),
+              child: Text('Progress', style: TextStyle(fontSize: 21)),
+            ),
+            Column(children: [
+              for (String level in levels)
+                ListTile(
+                  leading: const Icon(Icons.check_circle),
+                  title: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${level != 'Idioms' ? 'Level ' : ''}$level: ${wordsNum(level, 'Remembered')}/${words.where((word) => word.level == level).length}',
+                      ),
+                      LinearProgressIndicator(
+                        value: wordsNum(level, 'Remembered') /
+                            wordsNum(level, 'All'),
+                      ),
+                    ],
+                  ),
                 ),
-              )
-            ],
-          ),
+            ]),
+          ]),
         )),
       ),
     );
