@@ -32,6 +32,7 @@ class _TopPageState extends State<TopPage> {
   ];
   static String statusToDisplay = 'Not remembered';
   static bool listenOnTap = true;
+  static bool listenJapanese = true;
   static double playSpeed = 1.0;
 
   AudioPlayer audioPlayer = AudioPlayer();
@@ -185,6 +186,11 @@ class _TopPageState extends State<TopPage> {
                                       await audioPlayer.setAsset(
                                           'assets/mp3/${words[index].mp3Eng}.mp3');
                                       await audioPlayer.play();
+                                      if (listenJapanese) {
+                                        await audioPlayer.setAsset(
+                                            'assets/mp3/${words[index].mp3Jap}.mp3');
+                                        await audioPlayer.play();
+                                      }
                                     }
                                     int i = user.words!.indexWhere((word) =>
                                         word['id'] == words[index].id);
@@ -293,14 +299,40 @@ class _TopPageState extends State<TopPage> {
                 leading: const Icon(Icons.build_circle),
                 title: Row(
                   children: [
-                    Text('Listen on Tap: ${listenOnTap ? 'ON' : 'OFF'}'),
+                    const SizedBox(width: 120, child: Text('Listen on Tap:')),
+                    SizedBox(
+                        width: 26, child: Text(listenOnTap ? 'ON' : 'OFF')),
                     Switch(
                       value: listenOnTap,
                       onChanged: (bool? value) {
                         setState(() {
                           listenOnTap = value!;
+                          if (!listenOnTap) {
+                            listenJapanese = false;
+                          }
                         });
                       },
+                    )
+                  ],
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.build_circle),
+                title: Row(
+                  children: [
+                    const SizedBox(
+                        width: 120, child: Text('Include Japanese:')),
+                    SizedBox(
+                        width: 26, child: Text(listenJapanese ? 'ON ' : 'OFF')),
+                    Switch(
+                      value: listenJapanese,
+                      onChanged: listenOnTap
+                          ? (bool? value) {
+                              setState(() {
+                                listenJapanese = value!;
+                              });
+                            }
+                          : null,
                     )
                   ],
                 ),
