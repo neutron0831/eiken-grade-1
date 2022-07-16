@@ -1,7 +1,10 @@
+// ignore_for_file: unnecessary_new
+
 import 'dart:convert';
 
 import 'package:audio_session/audio_session.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
+import 'package:eiken_grade_1/components/progress_chart.dart';
 import 'package:eiken_grade_1/model/user.dart';
 import 'package:eiken_grade_1/model/word.dart';
 import 'package:eiken_grade_1/utils/firebase.dart';
@@ -48,12 +51,28 @@ class _TopPageState extends State<TopPage> {
     }
   }
 
+  bool isWordToDisplay(Word word) {
+    return levelToDisplay == word.level &&
+        (statusToDisplay == 'All' ||
+            statusToDisplay == 'Remembered' && isWord(word.id, 'Remembered') ||
+            statusToDisplay == 'Forgot' && isWord(word.id, 'Forgot') ||
+            statusToDisplay == 'Not remembered' &&
+                isWord(word.id, 'Not remembered'));
+  }
+
   int wordsNum(String level, String status) {
     return words.isNotEmpty
         ? words
             .where((word) => word.level == level && isWord(word.id, status))
             .length
         : 1;
+  }
+
+  Future<void> _fetchUserData() async {
+    await Firestore.getUser(user.username).then((u) {
+      user.id = u['id'].toString();
+    });
+    await Firestore.getWords(user.id).then((words) => user.words = words);
   }
 
   Future<void> _setupSession() async {
@@ -64,6 +83,7 @@ class _TopPageState extends State<TopPage> {
   @override
   void initState() {
     super.initState();
+    _fetchUserData().whenComplete(() => setState(() {}));
     _setupSession();
   }
 
@@ -86,10 +106,6 @@ class _TopPageState extends State<TopPage> {
         future: Future.wait([
           DefaultAssetBundle.of(context).loadString('assets/words.json'),
           DefaultAssetBundle.of(context).loadString('assets/symbols.json'),
-          Firestore.getUser(user.username).then((u) {
-            user.id = u['id'].toString();
-            Firestore.getWords(user.id).then((words) => user.words = words);
-          }),
         ]),
         builder: (context, snapshot) {
           // if (snapshot.connectionState == ConnectionState.waiting) {
@@ -100,22 +116,7 @@ class _TopPageState extends State<TopPage> {
           }
           words = List<Word>.from(
               jsonDecode((snapshot.data! as List)[0].toString())
-                  .map((word) => Word(
-                        category: word['category'],
-                        eng: word['eng'],
-                        exEng: word['ex_eng'],
-                        exJap: word['ex_jap'],
-                        exp: word['exp'] ?? '',
-                        id: word['id'],
-                        jap: word['jap'],
-                        level: word['level'] != '' ? word['level'] : 'Idioms',
-                        mp3Eng: word['mp3_eng'],
-                        mp3Ex: word['mp3_ex'],
-                        mp3Jap: word['mp3_jap'],
-                        no: word['no'],
-                        pron: word['pron'] ?? '',
-                        pum: word['pum'],
-                      )));
+                  .map((word) => Word.fromJSON(word)));
           List<String> ipaSymbols = List<String>.from(
               jsonDecode((snapshot.data! as List)[1].toString())
                   .map((symbol) => symbol['ipa_symbol']));
@@ -129,14 +130,7 @@ class _TopPageState extends State<TopPage> {
                 controller: scrollController,
                 itemCount: words.length,
                 itemBuilder: (context, index) {
-                  return levelToDisplay == words[index].level &&
-                          (statusToDisplay == 'All' ||
-                              statusToDisplay == 'Remembered' &&
-                                  isWord(words[index].id, 'Remembered') ||
-                              statusToDisplay == 'Forgot' &&
-                                  isWord(words[index].id, 'Forgot') ||
-                              statusToDisplay == 'Not remembered' &&
-                                  isWord(words[index].id, 'Not remembered'))
+                  return isWordToDisplay(words[index])
                       ? Container(
                           decoration: const BoxDecoration(
                               border: Border(bottom: BorderSide())),
@@ -248,114 +242,123 @@ class _TopPageState extends State<TopPage> {
         child: Drawer(
             child: Scaffold(
           appBar: AppBar(title: const Text('Menu')),
-          body: Column(children: [
-            const Padding(
-              padding: EdgeInsets.only(top: 21),
-              child: Text('Settings', style: TextStyle(fontSize: 21)),
-            ),
-            ListTile(
-              leading: const Icon(Icons.build_circle),
-              title: Row(
-                children: [
-                  const SizedBox(width: 50, child: Text('Level:')),
-                  DropdownButton(
-                    value: levelToDisplay,
-                    items: levels
-                        .map((level) =>
-                            DropdownMenuItem(value: level, child: Text(level)))
-                        .toList(),
-                    onChanged: (String? value) {
-                      setState(() {
-                        levelToDisplay = value!;
-                      });
-                    },
-                  ),
-                ],
+          body: SingleChildScrollView(
+            scrollDirection: Axis.vertical,
+            child: Column(children: [
+              const Padding(
+                padding: EdgeInsets.only(top: 21),
+                child: Text('Settings', style: TextStyle(fontSize: 21)),
               ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.build_circle),
-              title: Row(
-                children: [
-                  const SizedBox(width: 50, child: Text('Status:')),
-                  DropdownButton(
-                    value: statusToDisplay,
-                    items: status
-                        .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                        .toList(),
-                    onChanged: (String? value) {
-                      setState(() {
-                        statusToDisplay = value!;
-                      });
-                    },
-                  ),
-                ],
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.build_circle),
-              title: Row(
-                children: [
-                  Text('Listen on Tap: ${listenOnTap ? 'ON' : 'OFF'}'),
-                  Switch(
-                    value: listenOnTap,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        listenOnTap = value!;
-                      });
-                    },
-                  )
-                ],
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.build_circle),
-              title: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Play Speed: x$playSpeed'),
-                  SliderTheme(
-                    data: const SliderThemeData(
-                        activeTickMarkColor: Colors.green,
-                        inactiveTickMarkColor: Colors.transparent),
-                    child: Slider(
-                        value: playSpeed,
-                        min: 0.5,
-                        max: 4.0,
-                        divisions: 7,
-                        onChanged: (double? value) async {
-                          await audioPlayer.setSpeed(value!);
-                          setState(() {
-                            playSpeed = value;
-                          });
-                        }),
-                  )
-                ],
-              ),
-            ),
-            const Padding(
-              padding: EdgeInsets.only(top: 21),
-              child: Text('Progress', style: TextStyle(fontSize: 21)),
-            ),
-            Column(children: [
-              for (String level in levels)
-                ListTile(
-                  leading: const Icon(Icons.check_circle),
-                  title: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${level != 'Idioms' ? 'Level ' : ''}$level: ${wordsNum(level, 'Remembered')}/${words.where((word) => word.level == level).length}',
-                      ),
-                      LinearProgressIndicator(
-                        value: wordsNum(level, 'Remembered') /
-                            wordsNum(level, 'All'),
-                      ),
-                    ],
-                  ),
+              ListTile(
+                leading: const Icon(Icons.build_circle),
+                title: Row(
+                  children: [
+                    const SizedBox(width: 50, child: Text('Level:')),
+                    DropdownButton(
+                      value: levelToDisplay,
+                      items: levels
+                          .map((level) => DropdownMenuItem(
+                              value: level, child: Text(level)))
+                          .toList(),
+                      onChanged: (String? value) {
+                        setState(() {
+                          levelToDisplay = value!;
+                        });
+                      },
+                    ),
+                  ],
                 ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.build_circle),
+                title: Row(
+                  children: [
+                    const SizedBox(width: 50, child: Text('Status:')),
+                    DropdownButton(
+                      value: statusToDisplay,
+                      items: status
+                          .map(
+                              (s) => DropdownMenuItem(value: s, child: Text(s)))
+                          .toList(),
+                      onChanged: (String? value) {
+                        setState(() {
+                          statusToDisplay = value!;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.build_circle),
+                title: Row(
+                  children: [
+                    Text('Listen on Tap: ${listenOnTap ? 'ON' : 'OFF'}'),
+                    Switch(
+                      value: listenOnTap,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          listenOnTap = value!;
+                        });
+                      },
+                    )
+                  ],
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.build_circle),
+                title: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Play Speed: x$playSpeed'),
+                    SliderTheme(
+                      data: const SliderThemeData(
+                          activeTickMarkColor: Colors.green,
+                          inactiveTickMarkColor: Colors.transparent),
+                      child: Slider(
+                          value: playSpeed,
+                          min: 0.5,
+                          max: 4.0,
+                          divisions: 7,
+                          onChanged: (double? value) async {
+                            await audioPlayer.setSpeed(value!);
+                            setState(() {
+                              playSpeed = value;
+                            });
+                          }),
+                    )
+                  ],
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.only(top: 21),
+                child: Text('Progress', style: TextStyle(fontSize: 21)),
+              ),
+              Column(children: [
+                for (String level in levels)
+                  ListTile(
+                    leading: const Icon(Icons.check_circle),
+                    title: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${level != 'Idioms' ? 'Level ' : ''}$level: ${wordsNum(level, 'Remembered')}/${words.where((word) => word.level == level).length}',
+                        ),
+                        LinearProgressIndicator(
+                          value: wordsNum(level, 'Remembered') /
+                              wordsNum(level, 'All'),
+                        ),
+                      ],
+                    ),
+                  ),
+              ]),
+              Container(
+                padding: const EdgeInsets.only(top: 14, left: 14),
+                height: 150,
+                child: ProgressChart(user.words!, animate: false),
+              ),
             ]),
-          ]),
+          ),
         )),
       ),
     );

@@ -31,4 +31,23 @@ class Word {
       required this.no,
       this.pron,
       required this.pum});
+
+  static Word fromJSON(Map<String, dynamic> json) {
+    return Word(
+      category: json['category'],
+      eng: json['eng'],
+      exEng: json['ex_eng'],
+      exJap: json['ex_jap'],
+      exp: json['exp'] ?? '',
+      id: json['id'],
+      jap: json['jap'],
+      level: json['level'] != '' ? json['level'] : 'Idioms',
+      mp3Eng: json['mp3_eng'],
+      mp3Ex: json['mp3_ex'],
+      mp3Jap: json['mp3_jap'],
+      no: json['no'],
+      pron: json['pron'] ?? '',
+      pum: json['pum'],
+    );
+  }
 }
