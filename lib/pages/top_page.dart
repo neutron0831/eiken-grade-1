@@ -51,12 +51,28 @@ class _TopPageState extends State<TopPage> {
     }
   }
 
+  bool isWordToDisplay(Word word) {
+    return levelToDisplay == word.level &&
+        (statusToDisplay == 'All' ||
+            statusToDisplay == 'Remembered' && isWord(word.id, 'Remembered') ||
+            statusToDisplay == 'Forgot' && isWord(word.id, 'Forgot') ||
+            statusToDisplay == 'Not remembered' &&
+                isWord(word.id, 'Not remembered'));
+  }
+
   int wordsNum(String level, String status) {
     return words.isNotEmpty
         ? words
             .where((word) => word.level == level && isWord(word.id, status))
             .length
         : 1;
+  }
+
+  Future<void> _fetchUserData() async {
+    await Firestore.getUser(user.username).then((u) {
+      user.id = u['id'].toString();
+    });
+    await Firestore.getWords(user.id).then((words) => user.words = words);
   }
 
   Future<void> _setupSession() async {
@@ -67,6 +83,7 @@ class _TopPageState extends State<TopPage> {
   @override
   void initState() {
     super.initState();
+    _fetchUserData().whenComplete(() => setState(() {}));
     _setupSession();
   }
 
@@ -89,10 +106,6 @@ class _TopPageState extends State<TopPage> {
         future: Future.wait([
           DefaultAssetBundle.of(context).loadString('assets/words.json'),
           DefaultAssetBundle.of(context).loadString('assets/symbols.json'),
-          Firestore.getUser(user.username).then((u) {
-            user.id = u['id'].toString();
-            Firestore.getWords(user.id).then((words) => user.words = words);
-          }),
         ]),
         builder: (context, snapshot) {
           // if (snapshot.connectionState == ConnectionState.waiting) {
@@ -103,22 +116,7 @@ class _TopPageState extends State<TopPage> {
           }
           words = List<Word>.from(
               jsonDecode((snapshot.data! as List)[0].toString())
-                  .map((word) => Word(
-                        category: word['category'],
-                        eng: word['eng'],
-                        exEng: word['ex_eng'],
-                        exJap: word['ex_jap'],
-                        exp: word['exp'] ?? '',
-                        id: word['id'],
-                        jap: word['jap'],
-                        level: word['level'] != '' ? word['level'] : 'Idioms',
-                        mp3Eng: word['mp3_eng'],
-                        mp3Ex: word['mp3_ex'],
-                        mp3Jap: word['mp3_jap'],
-                        no: word['no'],
-                        pron: word['pron'] ?? '',
-                        pum: word['pum'],
-                      )));
+                  .map((word) => Word.fromJSON(word)));
           List<String> ipaSymbols = List<String>.from(
               jsonDecode((snapshot.data! as List)[1].toString())
                   .map((symbol) => symbol['ipa_symbol']));
@@ -132,14 +130,7 @@ class _TopPageState extends State<TopPage> {
                 controller: scrollController,
                 itemCount: words.length,
                 itemBuilder: (context, index) {
-                  return levelToDisplay == words[index].level &&
-                          (statusToDisplay == 'All' ||
-                              statusToDisplay == 'Remembered' &&
-                                  isWord(words[index].id, 'Remembered') ||
-                              statusToDisplay == 'Forgot' &&
-                                  isWord(words[index].id, 'Forgot') ||
-                              statusToDisplay == 'Not remembered' &&
-                                  isWord(words[index].id, 'Not remembered'))
+                  return isWordToDisplay(words[index])
                       ? Container(
                           decoration: const BoxDecoration(
                               border: Border(bottom: BorderSide())),
