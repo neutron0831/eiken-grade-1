@@ -28,7 +28,7 @@ class Firestore {
           .map((word) => {
                 'id': word['id'].toString(),
                 'remembered': word['remembered'],
-                'updatedAt': word['updated_at']
+                'updatedAt': word['updated_at'].toDate()
               })
           .toList();
     } catch (e) {

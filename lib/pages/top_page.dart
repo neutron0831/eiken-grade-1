@@ -1,7 +1,10 @@
+// ignore_for_file: unnecessary_new
+
 import 'dart:convert';
 
 import 'package:audio_session/audio_session.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
+import 'package:eiken_grade_1/components/progress_chart.dart';
 import 'package:eiken_grade_1/model/user.dart';
 import 'package:eiken_grade_1/model/word.dart';
 import 'package:eiken_grade_1/utils/firebase.dart';
@@ -248,114 +251,123 @@ class _TopPageState extends State<TopPage> {
         child: Drawer(
             child: Scaffold(
           appBar: AppBar(title: const Text('Menu')),
-          body: Column(children: [
-            const Padding(
-              padding: EdgeInsets.only(top: 21),
-              child: Text('Settings', style: TextStyle(fontSize: 21)),
-            ),
-            ListTile(
-              leading: const Icon(Icons.build_circle),
-              title: Row(
-                children: [
-                  const SizedBox(width: 50, child: Text('Level:')),
-                  DropdownButton(
-                    value: levelToDisplay,
-                    items: levels
-                        .map((level) =>
-                            DropdownMenuItem(value: level, child: Text(level)))
-                        .toList(),
-                    onChanged: (String? value) {
-                      setState(() {
-                        levelToDisplay = value!;
-                      });
-                    },
-                  ),
-                ],
+          body: SingleChildScrollView(
+            scrollDirection: Axis.vertical,
+            child: Column(children: [
+              const Padding(
+                padding: EdgeInsets.only(top: 21),
+                child: Text('Settings', style: TextStyle(fontSize: 21)),
               ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.build_circle),
-              title: Row(
-                children: [
-                  const SizedBox(width: 50, child: Text('Status:')),
-                  DropdownButton(
-                    value: statusToDisplay,
-                    items: status
-                        .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                        .toList(),
-                    onChanged: (String? value) {
-                      setState(() {
-                        statusToDisplay = value!;
-                      });
-                    },
-                  ),
-                ],
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.build_circle),
-              title: Row(
-                children: [
-                  Text('Listen on Tap: ${listenOnTap ? 'ON' : 'OFF'}'),
-                  Switch(
-                    value: listenOnTap,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        listenOnTap = value!;
-                      });
-                    },
-                  )
-                ],
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.build_circle),
-              title: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Play Speed: x$playSpeed'),
-                  SliderTheme(
-                    data: const SliderThemeData(
-                        activeTickMarkColor: Colors.green,
-                        inactiveTickMarkColor: Colors.transparent),
-                    child: Slider(
-                        value: playSpeed,
-                        min: 0.5,
-                        max: 4.0,
-                        divisions: 7,
-                        onChanged: (double? value) async {
-                          await audioPlayer.setSpeed(value!);
-                          setState(() {
-                            playSpeed = value;
-                          });
-                        }),
-                  )
-                ],
-              ),
-            ),
-            const Padding(
-              padding: EdgeInsets.only(top: 21),
-              child: Text('Progress', style: TextStyle(fontSize: 21)),
-            ),
-            Column(children: [
-              for (String level in levels)
-                ListTile(
-                  leading: const Icon(Icons.check_circle),
-                  title: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${level != 'Idioms' ? 'Level ' : ''}$level: ${wordsNum(level, 'Remembered')}/${words.where((word) => word.level == level).length}',
-                      ),
-                      LinearProgressIndicator(
-                        value: wordsNum(level, 'Remembered') /
-                            wordsNum(level, 'All'),
-                      ),
-                    ],
-                  ),
+              ListTile(
+                leading: const Icon(Icons.build_circle),
+                title: Row(
+                  children: [
+                    const SizedBox(width: 50, child: Text('Level:')),
+                    DropdownButton(
+                      value: levelToDisplay,
+                      items: levels
+                          .map((level) => DropdownMenuItem(
+                              value: level, child: Text(level)))
+                          .toList(),
+                      onChanged: (String? value) {
+                        setState(() {
+                          levelToDisplay = value!;
+                        });
+                      },
+                    ),
+                  ],
                 ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.build_circle),
+                title: Row(
+                  children: [
+                    const SizedBox(width: 50, child: Text('Status:')),
+                    DropdownButton(
+                      value: statusToDisplay,
+                      items: status
+                          .map(
+                              (s) => DropdownMenuItem(value: s, child: Text(s)))
+                          .toList(),
+                      onChanged: (String? value) {
+                        setState(() {
+                          statusToDisplay = value!;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.build_circle),
+                title: Row(
+                  children: [
+                    Text('Listen on Tap: ${listenOnTap ? 'ON' : 'OFF'}'),
+                    Switch(
+                      value: listenOnTap,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          listenOnTap = value!;
+                        });
+                      },
+                    )
+                  ],
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.build_circle),
+                title: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Play Speed: x$playSpeed'),
+                    SliderTheme(
+                      data: const SliderThemeData(
+                          activeTickMarkColor: Colors.green,
+                          inactiveTickMarkColor: Colors.transparent),
+                      child: Slider(
+                          value: playSpeed,
+                          min: 0.5,
+                          max: 4.0,
+                          divisions: 7,
+                          onChanged: (double? value) async {
+                            await audioPlayer.setSpeed(value!);
+                            setState(() {
+                              playSpeed = value;
+                            });
+                          }),
+                    )
+                  ],
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.only(top: 21),
+                child: Text('Progress', style: TextStyle(fontSize: 21)),
+              ),
+              Column(children: [
+                for (String level in levels)
+                  ListTile(
+                    leading: const Icon(Icons.check_circle),
+                    title: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${level != 'Idioms' ? 'Level ' : ''}$level: ${wordsNum(level, 'Remembered')}/${words.where((word) => word.level == level).length}',
+                        ),
+                        LinearProgressIndicator(
+                          value: wordsNum(level, 'Remembered') /
+                              wordsNum(level, 'All'),
+                        ),
+                      ],
+                    ),
+                  ),
+              ]),
+              Container(
+                padding: const EdgeInsets.only(top: 14, left: 14),
+                height: 150,
+                child: ProgressChart(user.words!, animate: false),
+              ),
             ]),
-          ]),
+          ),
         )),
       ),
     );
