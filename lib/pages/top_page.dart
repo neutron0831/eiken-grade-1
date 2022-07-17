@@ -1,5 +1,3 @@
-// ignore_for_file: unnecessary_new
-
 import 'dart:convert';
 
 import 'package:audio_session/audio_session.dart';
@@ -7,6 +5,7 @@ import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 import 'package:eiken_grade_1/components/progress_chart.dart';
 import 'package:eiken_grade_1/model/user.dart';
 import 'package:eiken_grade_1/model/word.dart';
+import 'package:eiken_grade_1/pages/word_page.dart';
 import 'package:eiken_grade_1/utils/firebase.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
@@ -47,7 +46,7 @@ class _TopPageState extends State<TopPage> {
     } else if (status == 'Forgot') {
       return words.where((word) => !word['remembered']).isNotEmpty;
     } else if (status == 'Not remembered') {
-      return words.where((word) => word['remembered']).isEmpty;
+      return words.isEmpty;
     } else {
       return true;
     }
@@ -220,46 +219,55 @@ class _TopPageState extends State<TopPage> {
                                   height: 80,
                                   child: SingleChildScrollView(
                                     scrollDirection: Axis.vertical,
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Html(
-                                            data: words[index]
-                                                .jap
-                                                .replaceAll('（', ' (')
-                                                .replaceAll('）', ') ')
-                                                .replaceAll('s>', 'small>')
-                                                .replaceAllMapped(
-                                                    RegExp(
-                                                        r'<r>(.*?)<rt>(.*?)<\/r>'),
-                                                    (m) =>
-                                                        '<ruby>${m[1]}<rt>${m[2]}</rt></ruby>'),
-                                            style: {
-                                              '*': Style(
-                                                  lineHeight: LineHeight.rem(
-                                                      words[index]
-                                                              .jap
-                                                              .contains('<rt>')
-                                                          ? 1.5
-                                                          : 1)),
-                                              'em': Style(
-                                                  color: isWord(words[index].id,
-                                                          'Remembered')
-                                                      ? Colors.transparent
-                                                      : Colors.redAccent,
-                                                  fontStyle: FontStyle.normal,
-                                                  fontWeight: FontWeight.bold)
-                                            }),
-                                        // isWord(words[index].id,
-                                        //         'Not remembered')
-                                        //     ? words[index].jap.replaceAll(
-                                        //         RegExp(r'<.*?>'), '')
-                                        //     : '',
-                                        // maxLines: 3,
-                                        // overflow: TextOverflow.ellipsis),
-                                      ],
-                                    ),
+                                    child: GestureDetector(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Html(
+                                                data: words[index]
+                                                    .jap
+                                                    .replaceAll('（', ' (')
+                                                    .replaceAll('）', ') ')
+                                                    .replaceAll('s>', 'small>')
+                                                    .replaceAllMapped(
+                                                        RegExp(
+                                                            r'<r>(.*?)<rt>(.*?)<\/r>'),
+                                                        (m) =>
+                                                            '<ruby>${m[1]}<rt>${m[2]}</rt></ruby>'),
+                                                style: {
+                                                  '*': Style(
+                                                      lineHeight: LineHeight
+                                                          .rem(words[index]
+                                                                  .jap
+                                                                  .contains(
+                                                                      '<rt>')
+                                                              ? 1.5
+                                                              : 1)),
+                                                  'em': Style(
+                                                      color: isWord(
+                                                              words[index].id,
+                                                              'Remembered')
+                                                          ? Colors.transparent
+                                                          : Colors.redAccent,
+                                                      fontStyle:
+                                                          FontStyle.normal,
+                                                      fontWeight:
+                                                          FontWeight.bold)
+                                                }),
+                                          ],
+                                        ),
+                                        onTap: () {
+                                          Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      WordPage(
+                                                          user,
+                                                          words[index],
+                                                          symbols,
+                                                          audioPlayer)));
+                                        }),
                                   ),
                                 ),
                               ),
