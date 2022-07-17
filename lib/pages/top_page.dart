@@ -9,6 +9,7 @@ import 'package:eiken_grade_1/model/user.dart';
 import 'package:eiken_grade_1/model/word.dart';
 import 'package:eiken_grade_1/utils/firebase.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_html/flutter_html.dart';
 import 'package:just_audio/just_audio.dart';
 
 class TopPage extends StatefulWidget {
@@ -145,15 +146,16 @@ class _TopPageState extends State<TopPage> {
                                         (levelToDisplay != 'Idioms'
                                             ? 0.4
                                             : 0.5),
-                                    color: const Color(0xfffbd6e7),
-                                    child: SingleChildScrollView(
-                                      scrollDirection: Axis.horizontal,
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(words[index].id),
-                                          Text(words[index].eng,
+                                    height: 80,
+                                    color: Colors.red[100],
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(words[index].id),
+                                        SingleChildScrollView(
+                                          scrollDirection: Axis.horizontal,
+                                          child: Text(words[index].eng,
                                               style: TextStyle(
                                                   backgroundColor: isWord(
                                                           words[index].id,
@@ -165,19 +167,17 @@ class _TopPageState extends State<TopPage> {
                                                           : Colors.transparent,
                                                   fontSize: 24,
                                                   fontWeight: FontWeight.bold)),
-                                          Text(symbols.entries
-                                              .toList()
-                                              .reversed
-                                              .fold(
-                                                  words[index].pron.toString(),
-                                                  (prev, e) => prev
-                                                      .replaceAll(
-                                                          e.key, e.value)
-                                                      .replaceAll(
-                                                          RegExp(r'<.*?>'),
-                                                          '')))
-                                        ],
-                                      ),
+                                        ),
+                                        Text(symbols.entries
+                                            .toList()
+                                            .reversed
+                                            .fold(
+                                                words[index].pron.toString(),
+                                                (prev, e) => prev
+                                                    .replaceAll(e.key, e.value)
+                                                    .replaceAll(
+                                                        RegExp(r'<.*?>'), '')))
+                                      ],
                                     ),
                                   ),
                                   onTap: () async {
@@ -217,22 +217,49 @@ class _TopPageState extends State<TopPage> {
                               Expanded(
                                 child: Container(
                                   padding: const EdgeInsets.all(10),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.max,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      SingleChildScrollView(
-                                        child: Text(
-                                            isWord(words[index].id,
-                                                    'Not remembered')
-                                                ? words[index].jap.replaceAll(
-                                                    RegExp(r'<.*?>'), '')
-                                                : '',
-                                            maxLines: 3,
-                                            overflow: TextOverflow.ellipsis),
-                                      ),
-                                    ],
+                                  height: 80,
+                                  child: SingleChildScrollView(
+                                    scrollDirection: Axis.vertical,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Html(
+                                            data: words[index]
+                                                .jap
+                                                .replaceAll('（', ' (')
+                                                .replaceAll('）', ') ')
+                                                .replaceAll('s>', 'small>')
+                                                .replaceAllMapped(
+                                                    RegExp(
+                                                        r'<r>(.*?)<rt>(.*?)<\/r>'),
+                                                    (m) =>
+                                                        '<ruby>${m[1]}<rt>${m[2]}</rt></ruby>'),
+                                            style: {
+                                              '*': Style(
+                                                  lineHeight: LineHeight.rem(
+                                                      words[index]
+                                                              .jap
+                                                              .contains('<rt>')
+                                                          ? 1.5
+                                                          : 1)),
+                                              'em': Style(
+                                                  color: isWord(words[index].id,
+                                                          'Remembered')
+                                                      ? Colors.transparent
+                                                      : Colors.redAccent,
+                                                  fontStyle: FontStyle.normal,
+                                                  fontWeight: FontWeight.bold)
+                                            }),
+                                        // isWord(words[index].id,
+                                        //         'Not remembered')
+                                        //     ? words[index].jap.replaceAll(
+                                        //         RegExp(r'<.*?>'), '')
+                                        //     : '',
+                                        // maxLines: 3,
+                                        // overflow: TextOverflow.ellipsis),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
@@ -386,7 +413,7 @@ class _TopPageState extends State<TopPage> {
               ]),
               Container(
                 padding: const EdgeInsets.only(top: 14, left: 14),
-                height: 150,
+                height: 200,
                 child: ProgressChart(user.words!, animate: false),
               ),
             ]),
