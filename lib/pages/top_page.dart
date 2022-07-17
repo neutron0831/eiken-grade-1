@@ -227,6 +227,8 @@ class _TopPageState extends State<TopPage> {
                                         Html(
                                             data: words[index]
                                                 .jap
+                                                .replaceAll('（', ' (')
+                                                .replaceAll('）', ') ')
                                                 .replaceAll('s>', 'small>')
                                                 .replaceAllMapped(
                                                     RegExp(
