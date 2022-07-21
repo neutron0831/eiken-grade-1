@@ -227,9 +227,10 @@ class _TopPageState extends State<TopPage> {
                                             Html(
                                                 data: words[index]
                                                     .jap
-                                                    .replaceAll('（', ' (')
-                                                    .replaceAll('）', ') ')
                                                     .replaceAll('s>', 'small>')
+                                                    .replaceAllMapped(
+                                                        RegExp(r'（(.*?)）'),
+                                                        (m) => ' (${m[1]}) ')
                                                     .replaceAllMapped(
                                                         RegExp(
                                                             r'<r>(.*?)<rt>(.*?)<\/r>'),
@@ -237,6 +238,7 @@ class _TopPageState extends State<TopPage> {
                                                             '<ruby>${m[1]}<rt>${m[2]}</rt></ruby>'),
                                                 style: {
                                                   '*': Style(
+                                                      margin: EdgeInsets.zero,
                                                       lineHeight: LineHeight
                                                           .rem(words[index]
                                                                   .jap

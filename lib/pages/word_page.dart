@@ -102,9 +102,9 @@ class WordPage extends StatelessWidget {
                       Expanded(
                         child: Html(
                             data: word.jap
-                                .replaceAll('（', ' (')
-                                .replaceAll('）', ') ')
                                 .replaceAll('s>', 'small>')
+                                .replaceAllMapped(
+                                    RegExp(r'（(.*?)）'), (m) => ' (${m[1]}) ')
                                 .replaceAllMapped(
                                     RegExp(r'<r>(.*?)<rt>(.*?)<\/r>'),
                                     (m) =>
