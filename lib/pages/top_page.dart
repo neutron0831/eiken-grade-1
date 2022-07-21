@@ -39,36 +39,6 @@ class _TopPageState extends State<TopPage> {
   ScrollController scrollController = ScrollController();
   GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
-  bool isWord(String wordId, String status) {
-    final words = user.words!.where((word) => word['id'] == wordId);
-    if (status == 'Remembered') {
-      return words.where((word) => word['remembered']).isNotEmpty;
-    } else if (status == 'Forgot') {
-      return words.where((word) => !word['remembered']).isNotEmpty;
-    } else if (status == 'Not remembered') {
-      return words.isEmpty;
-    } else {
-      return true;
-    }
-  }
-
-  bool isWordToDisplay(Word word) {
-    return levelToDisplay == word.level &&
-        (statusToDisplay == 'All' ||
-            statusToDisplay == 'Remembered' && isWord(word.id, 'Remembered') ||
-            statusToDisplay == 'Forgot' && isWord(word.id, 'Forgot') ||
-            statusToDisplay == 'Not remembered' &&
-                isWord(word.id, 'Not remembered'));
-  }
-
-  int wordsNum(String level, String status) {
-    return words.isNotEmpty
-        ? words
-            .where((word) => word.level == level && isWord(word.id, status))
-            .length
-        : 1;
-  }
-
   Future<void> _fetchUserData() async {
     await Firestore.getUser(user.username).then((u) {
       user.id = u['id'].toString();
@@ -131,7 +101,8 @@ class _TopPageState extends State<TopPage> {
                 controller: scrollController,
                 itemCount: words.length,
                 itemBuilder: (context, index) {
-                  return isWordToDisplay(words[index])
+                  return user.isWordToDisplay(
+                          words[index], levelToDisplay, statusToDisplay)
                       ? Container(
                           decoration: const BoxDecoration(
                               border: Border(bottom: BorderSide())),
@@ -156,11 +127,12 @@ class _TopPageState extends State<TopPage> {
                                           scrollDirection: Axis.horizontal,
                                           child: Text(words[index].eng,
                                               style: TextStyle(
-                                                  backgroundColor: isWord(
+                                                  backgroundColor: user.isWord(
                                                           words[index].id,
                                                           'Remembered')
                                                       ? Colors.green[200]
-                                                      : isWord(words[index].id,
+                                                      : user.isWord(
+                                                              words[index].id,
                                                               'Forgot')
                                                           ? Colors.red[200]
                                                           : Colors.transparent,
@@ -247,7 +219,7 @@ class _TopPageState extends State<TopPage> {
                                                               ? 1.5
                                                               : 1)),
                                                   'em': Style(
-                                                      color: isWord(
+                                                      color: user.isWord(
                                                               words[index].id,
                                                               'Remembered')
                                                           ? Colors.transparent
@@ -411,11 +383,11 @@ class _TopPageState extends State<TopPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${level != 'Idioms' ? 'Level ' : ''}$level: ${wordsNum(level, 'Remembered')}/${words.where((word) => word.level == level).length}',
+                          '${level != 'Idioms' ? 'Level ' : ''}$level: ${user.wordsNum(level, 'Remembered')}/${words.where((word) => word.level == level).length}',
                         ),
                         LinearProgressIndicator(
-                          value: wordsNum(level, 'Remembered') /
-                              wordsNum(level, 'All'),
+                          value: user.wordsNum(level, 'Remembered') /
+                              user.wordsNum(level, 'All'),
                         ),
                       ],
                     ),

@@ -17,19 +17,6 @@ class WordPage extends StatelessWidget {
       {Key? key})
       : super(key: key);
 
-  bool isWord(String wordId, String status) {
-    final words = user.words!.where((word) => word['id'] == wordId);
-    if (status == 'Remembered') {
-      return words.where((word) => word['remembered']).isNotEmpty;
-    } else if (status == 'Forgot') {
-      return words.where((word) => !word['remembered']).isNotEmpty;
-    } else if (status == 'Not remembered') {
-      return words.isEmpty;
-    } else {
-      return true;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -169,15 +156,15 @@ class WordPage extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        isWord(word.id, 'Remembered')
+                        user.isWord(word.id, 'Remembered')
                             ? const Icon(Icons.check_circle,
                                 color: Colors.green)
-                            : isWord(word.id, 'Forgot')
+                            : user.isWord(word.id, 'Forgot')
                                 ? const Icon(Icons.error, color: Colors.red)
                                 : const Icon(Icons.help, color: Colors.grey),
-                        Text(isWord(word.id, 'Not remembered')
+                        Text(user.isWord(word.id, 'Not remembered')
                             ? 'Not remembered'
-                            : '${isWord(word.id, 'Remembered') ? 'Remembered' : 'Forgot'} at: ${DateFormat('yyyy/MM/dd HH:mm').format(user.words!.firstWhere((w) => word.id == w['id'])['updatedAt'])}'),
+                            : '${user.isWord(word.id, 'Remembered') ? 'Remembered' : 'Forgot'} at: ${DateFormat('yyyy/MM/dd HH:mm').format(user.words!.firstWhere((w) => word.id == w['id'])['updatedAt'])}'),
                       ],
                     )),
               ]),
