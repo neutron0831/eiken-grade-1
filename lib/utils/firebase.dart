@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 
 class Firestore {
   static final FirebaseFirestore _firestoreInstance =
@@ -15,7 +16,7 @@ class Firestore {
         'username': user['username'],
       };
     } catch (e) {
-      print(e);
+      debugPrint(e.toString());
       rethrow;
     }
   }
@@ -32,7 +33,7 @@ class Firestore {
               })
           .toList();
     } catch (e) {
-      print(e);
+      debugPrint(e.toString());
       rethrow;
     }
   }
@@ -46,7 +47,7 @@ class Firestore {
         'updated_at': Timestamp.now()
       });
     } catch (e) {
-      print(e);
+      debugPrint(e.toString());
       rethrow;
     }
   }
@@ -60,10 +61,10 @@ class Firestore {
       await wordRef.doc(wordId).update({
         'id': word['id'],
         'remembered': word['remembered'],
-        'updated_at': Timestamp.now()
+        'updated_at': Timestamp.fromDate(word['updatedAt'])
       });
     } catch (e) {
-      print(e);
+      debugPrint(e.toString());
       rethrow;
     }
   }

@@ -1,5 +1,7 @@
-import 'package:collection/collection.dart';
 import 'package:eiken_grade_1/model/word.dart';
+import 'package:eiken_grade_1/utils/firebase.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class User {
   String id;
@@ -8,31 +10,56 @@ class User {
 
   User({required this.id, required this.username, required this.words});
 
-  bool isWord(String wordId, String status) {
-    final word = words.firstWhereOrNull((word) => word['id'] == wordId);
-    if (word == null) {
-      return status == 'Not remembered';
-    } else if (word['remembered']) {
-      return status == 'Remembered';
-    } else {
-      return status == 'Forgot' || status == 'Not remembered';
+  int wordsNum(List<Word> words, String level, String state) {
+    if (state == 'All') {
+      return words.where((word) => word.level == level).length;
     }
-  }
-
-  bool isWordToDisplay(Word word, String level, String status) {
-    if (level == word.level) {
-      return status == 'All' ||
-          ['Remembered', 'Forgot', 'Not remembered']
-              .any((s) => status == s && isWord(word.id, s));
-    } else {
-      return false;
-    }
-  }
-
-  int wordsNum(String level, String status) {
-    if (status == 'All') return words.length;
     return words
-        .where((word) => word['level'] == level && isWord(word['id'], status))
+        .where((word) => word.level == level && word.isState(state, this))
         .length;
   }
 }
+
+class UserNotifier extends ChangeNotifier {
+  final user = User(id: '', username: 'NEUTRON', words: []);
+
+  UserNotifier() {
+    Firestore.getUser(user.username).then((u) {
+      user.id = u['id']!;
+      Firestore.getWords(user.id).then((words) {
+        user.words = words;
+        notifyListeners();
+      });
+    });
+  }
+
+  void setId(String id) {
+    user.id = id;
+    notifyListeners();
+  }
+
+  void setWords(List words) {
+    user.words = words;
+    notifyListeners();
+  }
+
+  Future<void> setWord(String id) async {
+    final index = user.words.indexWhere((word) => word['id'] == id);
+    final word = {
+      'id': id,
+      'remembered': index != -1 ? !user.words[index]['remembered'] : true,
+      'updatedAt': DateTime.now()
+    };
+    if (index != -1) {
+      user.words[index] = word;
+      await Firestore.updateWord(user.id, word);
+    } else {
+      user.words.add(word);
+      await Firestore.addWord(user.id, word);
+    }
+    notifyListeners();
+  }
+}
+
+final userProvider =
+    ChangeNotifierProvider<UserNotifier>((ref) => UserNotifier());

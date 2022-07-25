@@ -44,6 +44,8 @@ dependencies:
   badges: ^2.0.3
   flutter_breadcrumb: ^1.0.1
   collection: ^1.16.0
+  flutter_riverpod: ^1.0.4
+  intl: ^0.17.0
 
 dev_dependencies:
   flutter_test:
