@@ -13,7 +13,7 @@ class Configuration {
   Configuration(
       {this.levels = const ['A', 'B', 'C', 'Idioms'],
       required this.level,
-      this.states = const ['Not remembered', 'Forgot', 'Remembered', 'All'],
+      this.states = const ['Remembered', 'Forgot', 'Not remembered', 'All'],
       required this.state,
       required this.listenEng,
       required this.listenJap,

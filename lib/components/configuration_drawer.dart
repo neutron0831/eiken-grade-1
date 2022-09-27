@@ -1,4 +1,5 @@
 import 'package:eiken_grade_1/components/progress_charts.dart';
+import 'package:eiken_grade_1/components/stacked_fill_color_bar_chart.dart';
 import 'package:eiken_grade_1/model/configuration.dart';
 import 'package:eiken_grade_1/model/user.dart';
 import 'package:eiken_grade_1/providers/words_provider.dart';
@@ -23,7 +24,7 @@ class SettingPage extends ConsumerWidget {
         body: SingleChildScrollView(
           scrollDirection: Axis.vertical,
           child: words.when(
-              loading: () => const Text('uuu'),
+              loading: () => const CircularProgressIndicator(),
               error: (err, stack) => Text('Error: $err'),
               data: (words) {
                 return Column(children: [
@@ -168,8 +169,13 @@ class SettingPage extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.only(top: 14, left: 14),
                     height: 200,
-                    child: ProgressChart(user.words, animate: false),
+                    child: const ProgressChart(),
                   ),
+                  Container(
+                    padding: const EdgeInsets.only(top: 14, left: 14),
+                    height: 200,
+                    child: const StackedFillColorBarChart(),
+                  )
                 ]);
               }),
         ),
