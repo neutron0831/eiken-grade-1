@@ -6,13 +6,21 @@ class Firestore {
       FirebaseFirestore.instance;
   static final userRef = _firestoreInstance.collection('user');
 
-  static Future<Map<String, String>> getUser(String username) async {
+  static Future<void> addUser(dynamic user) async {
     try {
-      final snapshot =
-          await userRef.where('username', isEqualTo: username).get();
-      final user = snapshot.docs[0].data();
+      await userRef.doc(user['id']).set({'username': user['username']});
+    } catch (e) {
+      debugPrint(e.toString());
+      rethrow;
+    }
+  }
+
+  static Future<Map<String, String>> getUser(String id) async {
+    try {
+      final snapshot = await userRef.doc(id).get();
+      final user = snapshot.data()!;
       return {
-        'id': snapshot.docs[0].id,
+        'id': id,
         'username': user['username'],
       };
     } catch (e) {

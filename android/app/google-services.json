@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "716850994585-kabqg6026mgm1u1iuorlpdcg6omstjqa.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.eiken_grade_1",
+            "certificate_hash": "6c67f0a00a68495f3b26f055e1a72e1bd3d2b7d0"
+          }
+        },
+        {
           "client_id": "716850994585-57kcg8ai7t1ap5vj3t5pbe56jpl24tsk.apps.googleusercontent.com",
           "client_type": 3
         }
