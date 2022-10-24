@@ -50,9 +50,7 @@ class SettingPage extends ConsumerWidget {
                                   size: 64,
                                   color: Colors.black.withOpacity(0.54)),
                           title: Text(
-                            currentFirebaseUser.displayName != null
-                                ? currentFirebaseUser.displayName!
-                                : 'Anonymous',
+                            user.username != '' ? user.username : 'Anonymous',
                             style: const TextStyle(fontSize: 21),
                             overflow: TextOverflow.ellipsis,
                           )),
@@ -219,6 +217,7 @@ class SettingPage extends ConsumerWidget {
                               ),
                               onPressed: () async {
                                 ref.read(authProvider).signOutFromGoogle();
+                                ref.read(userProvider).setUser(ref);
                                 Navigator.push(
                                     context,
                                     MaterialPageRoute(

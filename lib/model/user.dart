@@ -1,4 +1,5 @@
 import 'package:eiken_grade_1/model/word.dart';
+import 'package:eiken_grade_1/utils/authentication.dart';
 import 'package:eiken_grade_1/utils/firebase.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,16 +22,29 @@ class User {
 }
 
 class UserNotifier extends ChangeNotifier {
-  final user = User(id: '', username: 'NEUTRON', words: []);
+  final user = User(id: '', username: '', words: []);
 
-  UserNotifier() {
-    Firestore.getUser(user.username).then((u) {
+  UserNotifier(ref) {
+    setUser(ref);
+  }
+
+  void setUser(ref) {
+    final currentFirebaseUser = ref.read(authProvider).currentFirebaseUser;
+    Firestore.getUser(currentFirebaseUser.uid).then((u) {
       user.id = u['id']!;
+      user.username = u['username']!;
       Firestore.getWords(user.id).then((words) {
         user.words = words;
         notifyListeners();
       });
-    });
+    }).catchError((e) => Firestore.addUser({
+          'id': currentFirebaseUser.uid,
+          'username': currentFirebaseUser.displayName
+        }).then((_) {
+          user.id = currentFirebaseUser.uid;
+          user.words = [];
+          notifyListeners();
+        }));
   }
 
   void setId(String id) {
@@ -62,4 +76,4 @@ class UserNotifier extends ChangeNotifier {
 }
 
 final userProvider =
-    ChangeNotifierProvider<UserNotifier>((ref) => UserNotifier());
+    ChangeNotifierProvider<UserNotifier>((ref) => UserNotifier(ref));

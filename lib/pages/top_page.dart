@@ -1,6 +1,7 @@
 import 'package:audio_session/audio_session.dart';
 import 'package:eiken_grade_1/components/words_list_view.dart';
 import 'package:eiken_grade_1/components/configuration_drawer.dart';
+import 'package:eiken_grade_1/model/user.dart';
 import 'package:eiken_grade_1/utils/authentication.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -74,6 +75,7 @@ class TopPageState extends ConsumerState<TopPage> {
                       onPressed: () async {
                         try {
                           await ref.read(authProvider).signInWithGoogle();
+                          ref.read(userProvider).setUser(ref);
                         } catch (e) {
                           debugPrint(e.toString());
                         }
