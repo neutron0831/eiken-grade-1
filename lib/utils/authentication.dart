@@ -1,3 +1,4 @@
+import 'package:eiken_grade_1/firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,7 +11,10 @@ class AuthNotifier extends ChangeNotifier {
 
   Future<void> signInWithGoogle() async {
     try {
-      final googleUser = await GoogleSignIn(scopes: ['email']).signIn();
+      final googleUser = await GoogleSignIn(
+              scopes: ['email'],
+              clientId: DefaultFirebaseOptions.currentPlatform.iosClientId)
+          .signIn();
       if (googleUser != null) {
         final googleAuth = await googleUser.authentication;
         final credential = GoogleAuthProvider.credential(
@@ -31,7 +35,9 @@ class AuthNotifier extends ChangeNotifier {
   Future<void> signOutFromGoogle() async {
     if (isGoogleSignedIn) {
       try {
-        await GoogleSignIn().signOut();
+        await GoogleSignIn(
+                clientId: DefaultFirebaseOptions.currentPlatform.iosClientId)
+            .signOut();
         isGoogleSignedIn = false;
         notifyListeners();
       } on FirebaseAuthException catch (e) {

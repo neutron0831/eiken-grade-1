@@ -1,34 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-<dict>
-	<key>CLIENT_ID</key>
-	<string>716850994585-vh0e8boh26if68qus8dmgv65eelcerdg.apps.googleusercontent.com</string>
-	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.716850994585-vh0e8boh26if68qus8dmgv65eelcerdg</string>
-	<key>API_KEY</key>
-	<string>AIzaSyBu_xcYRvCcP-5iJWvhHQbbbptoLuTGCos</string>
-	<key>GCM_SENDER_ID</key>
-	<string>716850994585</string>
-	<key>PLIST_VERSION</key>
-	<string>1</string>
-	<key>BUNDLE_ID</key>
-	<string>com.example.eikenGrade1</string>
-	<key>PROJECT_ID</key>
-	<string>eiken-grade-1</string>
-	<key>STORAGE_BUCKET</key>
-	<string>eiken-grade-1.appspot.com</string>
-	<key>IS_ADS_ENABLED</key>
-	<false></false>
-	<key>IS_ANALYTICS_ENABLED</key>
-	<false></false>
-	<key>IS_APPINVITE_ENABLED</key>
-	<true></true>
-	<key>IS_GCM_ENABLED</key>
-	<true></true>
-	<key>IS_SIGNIN_ENABLED</key>
-	<true></true>
-	<key>GOOGLE_APP_ID</key>
-	<string>1:716850994585:ios:7d106c8f14de1731f34708</string>
-</dict>
+  <dict>
+    <key>CLIENT_ID</key>
+    <string>716850994585-vh0e8boh26if68qus8dmgv65eelcerdg.apps.googleusercontent.com</string>
+    <key>REVERSED_CLIENT_ID</key>
+    <string>com.googleusercontent.apps.716850994585-vh0e8boh26if68qus8dmgv65eelcerdg</string>
+    <key>ANDROID_CLIENT_ID</key>
+    <string>716850994585-kabqg6026mgm1u1iuorlpdcg6omstjqa.apps.googleusercontent.com</string>
+    <key>API_KEY</key>
+    <string>AIzaSyBu_xcYRvCcP-5iJWvhHQbbbptoLuTGCos</string>
+    <key>GCM_SENDER_ID</key>
+    <string>716850994585</string>
+    <key>PLIST_VERSION</key>
+    <string>1</string>
+    <key>BUNDLE_ID</key>
+    <string>com.example.eikenGrade1</string>
+    <key>PROJECT_ID</key>
+    <string>eiken-grade-1</string>
+    <key>STORAGE_BUCKET</key>
+    <string>eiken-grade-1.appspot.com</string>
+    <key>IS_ADS_ENABLED</key>
+    <false></false>
+    <key>IS_ANALYTICS_ENABLED</key>
+    <false></false>
+    <key>IS_APPINVITE_ENABLED</key>
+    <true></true>
+    <key>IS_GCM_ENABLED</key>
+    <true></true>
+    <key>IS_SIGNIN_ENABLED</key>
+    <true></true>
+    <key>GOOGLE_APP_ID</key>
+    <string>1:716850994585:ios:7d106c8f14de1731f34708</string>
+  </dict>
 </plist>
