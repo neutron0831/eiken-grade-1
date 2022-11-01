@@ -49,8 +49,6 @@ class WordsListView extends ConsumerWidget {
                                     height: config.level != 'Idioms' ? 83 : 80,
                                     color: Colors.red[100],
                                     child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [

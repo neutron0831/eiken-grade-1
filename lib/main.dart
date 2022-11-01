@@ -3,9 +3,12 @@ import 'package:eiken_grade_1/pages/top_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:eiken_grade_1/utils/configure_nonweb.dart'
+    if (dart.library.html) 'package:eiken_grade_1/utils/configure_web.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  configureUrl();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
