@@ -74,7 +74,7 @@ class TopPageState extends ConsumerState<TopPage> {
                       ),
                       onPressed: () async {
                         try {
-                          await ref.read(authProvider).signInWithGoogle();
+                          await ref.read(authProvider).signInWithGoogle(ref);
                           ref.read(userProvider).setUser(ref);
                         } catch (e) {
                           debugPrint(e.toString());

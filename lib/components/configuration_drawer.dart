@@ -73,7 +73,7 @@ class SettingPage extends ConsumerWidget {
                             onChanged: (String? value) {
                               ref
                                   .read(configurationProvider.notifier)
-                                  .setLevel(value!);
+                                  .setLevel(user.id, value!);
                             },
                           ),
                         ],
@@ -93,7 +93,7 @@ class SettingPage extends ConsumerWidget {
                             onChanged: (String? value) {
                               ref
                                   .read(configurationProvider.notifier)
-                                  .setState(value!);
+                                  .setState(user.id, value!);
                             },
                           ),
                         ],
@@ -113,11 +113,11 @@ class SettingPage extends ConsumerWidget {
                             onChanged: (bool? value) {
                               ref
                                   .read(configurationProvider.notifier)
-                                  .toggleListenEng(value!);
+                                  .toggleListenEng(user.id, value!);
                               if (!config.listenEng) {
                                 ref
                                     .read(configurationProvider.notifier)
-                                    .toggleListenJap(value);
+                                    .toggleListenJap(user.id, value);
                               }
                             },
                           )
@@ -139,7 +139,7 @@ class SettingPage extends ConsumerWidget {
                                 ? (bool? value) {
                                     ref
                                         .read(configurationProvider.notifier)
-                                        .toggleListenJap(value!);
+                                        .toggleListenJap(user.id, value!);
                                   }
                                 : null,
                           )
@@ -165,7 +165,7 @@ class SettingPage extends ConsumerWidget {
                                   await audioPlayer.setSpeed(value!);
                                   ref
                                       .read(configurationProvider.notifier)
-                                      .setPlaySpeed(value);
+                                      .setPlaySpeed(user.id, value);
                                 }),
                           )
                         ],
@@ -216,8 +216,7 @@ class SettingPage extends ConsumerWidget {
                                     color: Colors.black.withOpacity(0.54)),
                               ),
                               onPressed: () async {
-                                ref.read(authProvider).signOutFromGoogle();
-                                ref.read(userProvider).setUser(ref);
+                                ref.read(authProvider).signOutFromGoogle(ref);
                                 Navigator.push(
                                     context,
                                     MaterialPageRoute(
