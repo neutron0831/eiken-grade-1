@@ -1,3 +1,4 @@
+import 'package:eiken_grade_1/model/configuration.dart';
 import 'package:eiken_grade_1/model/word.dart';
 import 'package:eiken_grade_1/utils/authentication.dart';
 import 'package:eiken_grade_1/utils/firebase.dart';
@@ -33,6 +34,13 @@ class UserNotifier extends ChangeNotifier {
     Firestore.getUser(currentFirebaseUser.uid).then((u) {
       user.id = u['id']!;
       user.username = u['username']!;
+      final conf = Configuration(
+          level: u['level'],
+          state: u['state'],
+          listenEng: u['listenEng'],
+          listenJap: u['listenJap'],
+          playSpeed: u['playSpeed']);
+      ref.read(configurationProvider).setConfiguration(conf);
       Firestore.getWords(user.id).then((words) {
         user.words = words;
         notifyListeners();
@@ -40,7 +48,8 @@ class UserNotifier extends ChangeNotifier {
     }).catchError((e) => Firestore.addUser({
           'id': currentFirebaseUser.uid,
           'username': currentFirebaseUser.displayName
-        }).then((_) {
+        }, ref.read(configurationProvider).configuration)
+            .then((_) {
           user.id = currentFirebaseUser.uid;
           user.words = [];
           notifyListeners();
