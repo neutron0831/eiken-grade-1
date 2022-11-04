@@ -46,7 +46,7 @@ class WordsListView extends ConsumerWidget {
                                     padding: const EdgeInsets.all(10),
                                     width: MediaQuery.of(context).size.width *
                                         (config.level != 'Idioms' ? 0.4 : 0.5),
-                                    height: 80,
+                                    height: config.level != 'Idioms' ? 83 : 80,
                                     color: Colors.red[100],
                                     child: Column(
                                       crossAxisAlignment:
@@ -73,8 +73,9 @@ class WordsListView extends ConsumerWidget {
                                             error: (err, stack) =>
                                                 Text('Error: $err'),
                                             data: (symbols) {
-                                              return Text(
-                                                  word.ipaPron(symbols));
+                                              return config.level != 'Idioms'
+                                                  ? Text(word.ipaPron(symbols))
+                                                  : Container();
                                             }),
                                       ],
                                     ),
